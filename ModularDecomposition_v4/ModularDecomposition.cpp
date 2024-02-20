@@ -901,18 +901,21 @@ MD_Tree getModularDecomposition(const Graph& graph) {
     return getModularDecomposition(graph, nodeValueMapping);
 }
 
-
 /**
-* The main method.
-*/
-int main(int argc, char* argv[]) {
-    string adjList = "";
+ * Executes the modular decomposition algorithm for the graph given in the Graph.txt file.
+ * This file has to contain the adjacency list of the graph.
+ *
+ * @param argc The number of arguments.
+ * @param argv The arguments.
+ */
+void executeModularDecomposition(int argc, char* argv[]) {
+    string adjList;
     if (argc >= 2) {
         string filePath = argv[1];
         adjList = readFile(filePath);
     } else {
         cout << "Please provide valid arguments!" << endl;
-        return 1;
+        return;
     }
     vector<int> indexMapping;
 
@@ -930,14 +933,12 @@ int main(int argc, char* argv[]) {
 
     auto duration = chrono::duration_cast<chrono::nanoseconds>(end - start);
 
-    /*
     Util::sortTree(mdTree);
     cout << "The final MD-tree: " << endl << endl;
     printTree(mdTree.root);
 
     cout << endl << "Time needed: " << duration.count() << " nanoseconds for a graph with " << Util::getNumberVertices(graph)
     << " vertices and " << Util::getNumberEdges(graph) << " edges" << endl << endl;
-     */
 
     string output = "ModularDecomposition,";
     if (Util::testModularDecompositionTree(graph, mdTree)) {
@@ -948,20 +949,21 @@ int main(int argc, char* argv[]) {
     }
     output += to_string(nVertices) + "," + to_string(nEdges) + "," + to_string(nVertices + nEdges) + ",";
     output += to_string(duration.count());
-    cout << output << endl;
+    //cout << output << endl;
 }
+
 
 /**
  * Tests the correctness of the modular decomposition algorithm by randomly generating modular decomposition trees
  * of a specific size. These random trees get converted into adjacency-lists, which will be used by the modular decomposition
  * algorithm to compute a modular decomposition tree. This tree then gets compared to the initial MD-Tree. Multiple
  * repetitions of this process ensure the algorithms correctness.
+ *
+ * @param nRepetitions The number of repetitions.
+ * @param nVertices The number of vertices in each graph.
+ * @param useCoGraphs If the generated graphs should be cographs.
  */
-void testModularDecomposition () {
-    int nRepetitions = 100;
-    int nVertices = 25;
-    bool useCoGraphs = false;
-
+void testModularDecomposition (int nRepetitions, int nVertices, bool useCoGraphs) {
     int equalCounter = 0;
     for (int i = 0; i < nRepetitions; i++) {
 
@@ -975,7 +977,7 @@ void testModularDecomposition () {
         string tree2Representation = generateTreeString(mdTree.root);
         if (tree1Representation == tree2Representation) {
             equalCounter++;
-            if (equalCounter % 10 == 0) {
+            if (equalCounter % 100 == 0) {
                 cout << endl << "Equal: " << equalCounter << " of " << (i + 1) << endl;
             }
         } else {
@@ -991,6 +993,16 @@ void testModularDecomposition () {
             cout << endl;
         }
     }
-    cout << endl << "Equal: " << equalCounter << endl;
+    cout << endl << "Using " << to_string(nVertices) << " vertices:" << endl;
+    cout << "Equal: " << equalCounter <<endl;
     cout << "Not Equal: " << (nRepetitions - equalCounter) << endl;
+}
+
+
+/**
+* The main method.
+*/
+int main(int argc, char* argv[]) {
+    //executeModularDecomposition(argc, argv);
+    testModularDecomposition(100, 25, false);
 }
