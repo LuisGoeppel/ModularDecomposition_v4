@@ -55,10 +55,19 @@ To use this C++ implementation of the *Simple, Linear-time Modular Decomposition
 
 1. Clone the repository.
 2. Compile the source code using your preferred C++ compiler.
-3. Execute the compiled program, providing the necessary input.
+3. Provide the path to the Graph.txt-file as an argument in your configuration
+4. Insert your graph in the form of an adjacency list in the Graph.txt file
+5. Execute the compiled program, providing the necessary input.
 
 ### Note
 Ensure that the input graph is connected, simple and undirected. Otherwise, the algorithm might not produce any or faulty results.
+
+### Correctness and Time-Complexity
+This algorithm has been tested on more than 10 000 input graphs with sizes up to 10 000 vertices and edges. None of these tests showed signs of any wrong output. The method *testModularDecomposition*
+can be used to test the algorithm manually.
+Considering the time-complexity, the algorithm has shown to run within a quadratic time-bound. Unfortunately, this cannot keep up with the linear time-bounds promised by the authors of the algorithm.
+The slow-down is due to a less complicated, but also less effective implementation of the recursion-step. Instead of performing a breath-first search over all recursive substeps, the implementation
+performs one breadth-first search at every recursive substep. Hence, there is still room for improvement.
 
 ### Acknowledgments
 Special thanks to *Marc Tedder*, *Derek Corneil*, *Michel Habib*, and *Christophe Paul* for their groundbreaking work on the *Simple, Linear-time Modular Decomposition* algorithm.
