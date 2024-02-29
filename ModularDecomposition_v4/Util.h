@@ -15,18 +15,27 @@
 
 using namespace std;
 
+struct Ancestors{
+    TreeNode* commonAncestor;
+    TreeNode* ancestorChildLhs;
+    TreeNode* ancestorChildRhs;
+    int ancestorIndexLhs;
+    int ancestorIndexRhs;
+};
+
 class Util {
 public:
     static void sortTree(MD_Tree& tree);
     static vector<int> rewriteAdjacencyList(string& adjList);
     static bool isConsecutivelyOrdered(const string& input);
-    static bool testModularDecompositionTree(const Graph& graph, const MD_Tree& tree);
+    static bool testModularDecompositionTree(const Graph& graph, const MD_Tree& tree, const vector<TreeNode*>& nodeValueMapping);
     static void checkChildNodeValues(MD_Tree& tree);
     static int getNumberVertices(const Graph& graph);
     static int getNumberEdges(const Graph& graph);
-    static MD_Tree createRandomModularDecompositionTree(int nVertices, bool isCoGraph);
-    static Graph createGraphFromTree(const MD_Tree& tree);
+    static MD_Tree createRandomModularDecompositionTree(int nVertices, bool isCoGraph, vector<TreeNode*>& nodeValueMapping);
+    static Graph createGraphFromTree(const MD_Tree& tree, const vector<TreeNode*>& nodeValueMapping);
     static bool isValidModularDecompositionTree(const MD_Tree& tree);
+    static Ancestors getCommonAncestor(const vector<TreeNode*>& nodeValueMapping, int lhs, int rhs);
 
 private:
     static void sortTreeHelper(TreeNode* node);
@@ -40,5 +49,7 @@ private:
     static Label generateDifferentLabel(const Label& label, bool  isCoGraph);
     static void updateParentPointersAndModuleTypes(TreeNode* currentNode, TreeNode* parentNode, bool primeModule);
     static Label getLabel(int n);
+    static void resetTimestamps(TreeNode* node);
+    static void resetParentTimestamps(TreeNode* node);
 };
 

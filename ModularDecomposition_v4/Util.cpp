@@ -20,7 +20,7 @@ void Util::sortTree(MD_Tree& tree) {
  */
 vector<int> Util::rewriteAdjacencyList(string& adjList) {
     vector<int> indexMapping;
-    string updatedAdjlist = "";
+    string updatedAdjlist;
 
     istringstream iss(adjList);
     vector<string> lines;
@@ -41,7 +41,6 @@ vector<int> Util::rewriteAdjacencyList(string& adjList) {
     }
 
     adjList = updatedAdjlist;
-
     return indexMapping;
 }
 
@@ -79,55 +78,52 @@ bool Util::isConsecutivelyOrdered(const string& input) {
  * @param tree The Modular Decomposition tree.
  * @return True if the tree is valid, false otherwise.
  */
-bool Util::testModularDecompositionTree(const Graph& graph, const MD_Tree& tree)
+bool Util::testModularDecompositionTree(const Graph& graph, const MD_Tree& tree, const vector<TreeNode*>& nodeValueMapping)
 {
     vector<vector<int>> adjlist = graph.getAdjlist();
     vector<vector<int>> isConnectedByPrimeNode(adjlist.size(), vector<int>(adjlist.size(), 0));
 
-    for (int lhs = 0; lhs < adjlist.size(); lhs++) {
-        for (int rhs = 0; rhs < adjlist.size(); rhs++) {
-            if (lhs != rhs) {
+    for (int lhs = 0; lhs < adjlist.size() - 1; lhs++) {
+        for (int rhs = lhs + 1; rhs < adjlist.size(); rhs++) {
 
-                bool hasConnectionGraph = false;
-                for (int adj : adjlist[lhs]) {
-                    if (adj == rhs) {
-                        hasConnectionGraph = true;
-                        break;
-                    }
+            bool hasConnectionGraph = false;
+            for (int adj : adjlist[lhs]) {
+                if (adj == rhs) {
+                    hasConnectionGraph = true;
+                    break;
                 }
+            }
 
-                bool hasConnectionTree = hasConnectionGraph;
-                TreeNode* ancestorChildLhs = getCommonAncestorChildLhs(tree, lhs, rhs);
-                TreeNode* ancestorChildRhs = getCommonAncestorChildLhs(tree, rhs, lhs);
-                Label commonAncestorLabel = ancestorChildLhs->parent->label;
+            bool hasConnectionTree = hasConnectionGraph;
+            Ancestors ancestors = getCommonAncestor(nodeValueMapping, lhs, rhs);
+            Label commonAncestorLabel = ancestors.commonAncestor->label;
 
-                if (commonAncestorLabel == PARALLEL) {
-                    hasConnectionTree = false;
-                }
-                else if (commonAncestorLabel == SERIES) {
-                    hasConnectionTree = true;
+            if (commonAncestorLabel == PARALLEL) {
+                hasConnectionTree = false;
+            }
+            else if (commonAncestorLabel == SERIES) {
+                hasConnectionTree = true;
+            }
+            else {
+                if (isConnectedByPrimeNode[lhs][rhs] != 0) {
+                    hasConnectionTree = (isConnectedByPrimeNode[lhs][rhs] == 1);
                 }
                 else {
-                    if (isConnectedByPrimeNode[lhs][rhs] != 0) {
-                        hasConnectionTree = (isConnectedByPrimeNode[lhs][rhs] == 1);
-                    }
-                    else {
-                        vector<int> valuesLhs = getPreOrderLeafs(ancestorChildLhs);
-                        vector<int> valuesRhs = getPreOrderLeafs(ancestorChildRhs);
-                        int matrixValue = hasConnectionGraph ? 1 : -1;
-                        for (int i : valuesLhs) {
-                            for (int j : valuesRhs) {
-                                isConnectedByPrimeNode[i][j] = matrixValue;
-                                isConnectedByPrimeNode[j][i] = matrixValue;
-                            }
+                    vector<int> valuesLhs = getPreOrderLeafs(ancestors.ancestorChildLhs);
+                    vector<int> valuesRhs = getPreOrderLeafs(ancestors.ancestorChildRhs);
+                    int matrixValue = hasConnectionGraph ? 1 : -1;
+                    for (int i : valuesLhs) {
+                        for (int j : valuesRhs) {
+                            isConnectedByPrimeNode[i][j] = matrixValue;
+                            isConnectedByPrimeNode[j][i] = matrixValue;
                         }
                     }
                 }
+            }
 
-                if (hasConnectionGraph != hasConnectionTree) {
-                    cout << "Error! Nodes " << lhs << " and " << rhs  << " have different connections in the graph and the MD_Tree!" << endl;
-                    return false;
-                }
+            if (hasConnectionGraph != hasConnectionTree) {
+                cout << "Error! Nodes " << lhs << " and " << rhs  << " have different connections in the graph and the MD_Tree!" << endl;
+                return false;
             }
         }
     }
@@ -159,7 +155,7 @@ void Util::sortTreeHelper(TreeNode* node) {
         next = next->sibling;
     }
 
-    if (children.size() > 0) {
+    if (!children.empty()) {
         sort(children.begin(), children.end(), compareTreeNodePointers);
         for (int i = 0; i < children.size(); i++) {
             if (i == 0) {
@@ -212,7 +208,6 @@ vector<int> Util::getInverse(const vector<int>& vec)
 TreeNode* Util::getCommonAncestorChildLhs(const MD_Tree& tree, int lhs, int rhs)
 {
     TreeNode* lhsNode = getCorrespondingTreeNode(tree.root, lhs);
-    TreeNode* rhsNode = getCorrespondingTreeNode(tree.root, rhs);
     TreeNode* currentAncestor = lhsNode->parent;
     TreeNode* ancestorChildLhs = lhsNode;
 
@@ -284,7 +279,7 @@ void Util::checkChildNodeValuesHelper(TreeNode* node)
  * @return The number of vertices.
  */
 int Util::getNumberVertices(const Graph &graph) {
-    return graph.getAdjlist().size();
+    return static_cast<int>(graph.getAdjlist().size());
 }
 
 /**
@@ -295,8 +290,8 @@ int Util::getNumberVertices(const Graph &graph) {
  */
 int Util::getNumberEdges(const Graph &graph) {
     int count = 0;
-    for (int i = 0; i < graph.getAdjlist().size(); i++) {
-        count += graph.getAdjlist()[i].size();
+    for (const auto & vertex : graph.getAdjlist()) {
+        count += static_cast<int>(vertex.size());
     }
     return count/2;
 }
@@ -308,7 +303,7 @@ int Util::getNumberEdges(const Graph &graph) {
  * @param isCoGraph If the tree should be a cograph, i.e. have only PARALLEL and SERIES nodes
  * @return A randomly generated modular decomposition tree.
  */
-MD_Tree Util::createRandomModularDecompositionTree(int nVertices, bool isCoGraph) {
+MD_Tree Util::createRandomModularDecompositionTree(int nVertices, bool isCoGraph, vector<TreeNode*>& nodeValueMapping) {
 
     random_device rd;
     mt19937 gen(rd());
@@ -344,12 +339,13 @@ MD_Tree Util::createRandomModularDecompositionTree(int nVertices, bool isCoGraph
                 int isLeafNode = remainingVertices.size() >= 2 ? randomBool(gen) : 1;
                 if (isLeafNode == 1) {
                     if (!remainingVertices.empty()) {
-                        uniform_int_distribution<int> randomVertex(0, remainingVertices.size() - 1);
+                        uniform_int_distribution<int> randomVertex(0, static_cast<int>(remainingVertices.size()) - 1);
                         int vertexIndex = randomVertex(gen);
                         int vertex = remainingVertices[vertexIndex];
                         remainingVertices.erase(remainingVertices.begin() + vertexIndex);
                         vertexCount++;
                         currentChild = new TreeNode(vertex);
+                        nodeValueMapping[vertex] = currentChild;
                     }
                 } else {
                     Label currentLabel = getLabel(randomNodeType(gen));
@@ -377,14 +373,14 @@ MD_Tree Util::createRandomModularDecompositionTree(int nVertices, bool isCoGraph
     } while (res == 1);
 
     if (res == -1) {
-        return createRandomModularDecompositionTree(nVertices, isCoGraph);
+        return createRandomModularDecompositionTree(nVertices, isCoGraph, nodeValueMapping);
     }
 
-    MD_Tree* result = new MD_Tree(rootNode);
+    auto* result = new MD_Tree(rootNode);
     if (isValidModularDecompositionTree(*result)) {
         return *result;
     } else {
-        return createRandomModularDecompositionTree(nVertices, isCoGraph);
+        return createRandomModularDecompositionTree(nVertices, isCoGraph, nodeValueMapping);
     }
 }
 
@@ -395,52 +391,28 @@ MD_Tree Util::createRandomModularDecompositionTree(int nVertices, bool isCoGraph
  * @param tree The tree to create the graph for.
  * @return The created graph.
  */
-Graph Util::createGraphFromTree(const MD_Tree& tree) {
+Graph Util::createGraphFromTree(const MD_Tree& tree, const vector<TreeNode*>& nodeValueMapping) {
     int nVertices = 0;
     getHighestVertexValue(tree.root, nVertices);
     nVertices++;
     vector<vector<int>> adjList(nVertices);
-    for (int lhs = 0; lhs < nVertices; lhs++) {
-        for (int rhs = 0; rhs < nVertices; rhs++) {
-            if (lhs != rhs) {
 
-                TreeNode* lhsNode = getCorrespondingTreeNode(tree.root, lhs);
-                TreeNode* currentAncestor = lhsNode->parent;
-                while (currentAncestor != nullptr) {
-                    vector<int> currentLeafNodes = getPreOrderLeafs(currentAncestor);
-                    if (find(currentLeafNodes.begin(), currentLeafNodes.end(), rhs) != currentLeafNodes.end()) {
-                        break;
-                    }
-                    currentAncestor = currentAncestor->parent;
-                }
+    for (int lhs = 0; lhs < nVertices - 1; lhs++) {
+        for (int rhs = lhs + 1; rhs < nVertices; rhs++) {
+            Ancestors ancestors = getCommonAncestor(nodeValueMapping, lhs, rhs);
 
-                if (currentAncestor->label == PRIME) {
-                    int lhsChildIndex = 0;
-                    int rhsChildIndex = 0;
-                    int childCounter = 0;
-                    TreeNode* currentChild = currentAncestor->child;
-                    while (currentChild != nullptr) {
-                        vector<int> currentLeafNodes = getPreOrderLeafs(currentChild);
-                        if (find(currentLeafNodes.begin(), currentLeafNodes.end(), lhs) != currentLeafNodes.end()) {
-                            lhsChildIndex = childCounter;
-                        }
-                        if (find(currentLeafNodes.begin(), currentLeafNodes.end(), rhs) != currentLeafNodes.end()) {
-                            rhsChildIndex = childCounter;
-                        }
-                        currentChild = currentChild->sibling;
-                        childCounter++;
-                    }
-
-                    if (abs(lhsChildIndex - rhsChildIndex) == 1) {
-                        adjList[lhs].push_back(rhs);
-                    }
-                } else if (currentAncestor -> label == SERIES) {
+            if (ancestors.commonAncestor->label == PRIME) {
+                if (abs(ancestors.ancestorIndexLhs - ancestors.ancestorIndexRhs) == 1) {
                     adjList[lhs].push_back(rhs);
+                    adjList[rhs].push_back(lhs);
                 }
+            } else if (ancestors.commonAncestor -> label == SERIES) {
+                adjList[lhs].push_back(rhs);
+                adjList[rhs].push_back(lhs);
             }
         }
     }
-    return Graph(adjList);
+    return {adjList};
 }
 
 /**
@@ -639,6 +611,92 @@ void Util::updateParentPointersAndModuleTypes(TreeNode* currentNode, TreeNode* p
     }
     if (currentNode -> child != nullptr) {
         updateParentPointersAndModuleTypes(currentNode->child, currentNode, false);
+    }
+}
+
+/**
+ * Returns the common ancestor of two leaf-nodes in the given tree, represented by their values.
+ *
+ * @param nodeValueMapping The nodeValueMapping.
+ * @param lhs The value representing the first node.
+ * @param rhs The value representing the second node.
+ * @return The common ancestor of the given node, as well as information about which of its children
+ *      has the given nodes as descendants.
+ */
+Ancestors Util::getCommonAncestor(const vector<TreeNode*>& nodeValueMapping, int lhs, int rhs) {
+    int timestampValueLhs = numeric_limits<int>::max() / 2;
+    int timestampValueRhs = numeric_limits<int>::min() / 2;
+
+    TreeNode* nodeLhs = nodeValueMapping[lhs];
+    TreeNode* nodeRhs = nodeValueMapping[rhs];
+    TreeNode* commonAncestor;
+    TreeNode* ancestorChildLhs;
+    TreeNode* ancestorChildRhs;
+    int ancestorIndexLhs;
+    int ancestorIndexRhs;
+
+    TreeNode* currentLhs = nodeLhs;
+    while (currentLhs != nullptr) {
+        currentLhs->timestamp = timestampValueLhs;
+        currentLhs = currentLhs->parent;
+    }
+
+    TreeNode* currentRhs = nodeRhs;
+    while (currentRhs != nullptr) {
+        if (currentRhs->timestamp == timestampValueLhs) {
+            commonAncestor = currentRhs;
+            currentRhs = nullptr;
+        } else {
+            currentRhs->timestamp = timestampValueRhs;
+            currentRhs = currentRhs->parent;
+        }
+    }
+
+    TreeNode* currentChild = commonAncestor->child;
+    int currentIndex = 0;
+    while (currentChild != nullptr) {
+        if (currentChild->timestamp == timestampValueLhs) {
+            ancestorIndexLhs = currentIndex;
+            ancestorChildLhs = currentChild;
+        }
+        if (currentChild->timestamp == timestampValueRhs) {
+            ancestorIndexRhs = currentIndex;
+            ancestorChildRhs = currentChild;
+        }
+        currentChild = currentChild->sibling;
+        currentIndex++;
+    }
+    resetTimestamps(commonAncestor);
+    resetParentTimestamps(commonAncestor);
+
+    return {commonAncestor, ancestorChildLhs, ancestorChildRhs, ancestorIndexLhs, ancestorIndexRhs};
+}
+
+/**
+* Resets all timestamps of the given tree to -1.
+*
+* @param root The root of the tree to reset the timestamps of.
+*/
+void Util::resetTimestamps(TreeNode* node)
+{
+    node->timestamp = -1;
+    if (node->child != nullptr) {
+        resetTimestamps(node->child);
+    }
+    if (node->sibling != nullptr) {
+        resetTimestamps(node->sibling);
+    }
+}
+
+/**
+ * Resets all timestamps of all ancestors of the given node.
+ *
+ * @param node The given node.
+ */
+void Util::resetParentTimestamps(TreeNode *node) {
+    node->timestamp = -1;
+    if (node->parent != nullptr) {
+        resetParentTimestamps(node->parent);
     }
 }
 
