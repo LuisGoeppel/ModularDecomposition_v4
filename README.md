@@ -54,10 +54,10 @@ The result is the completed modular decomposition tree, ready to provide insight
 To use this C++ implementation of the *Simple, Linear-time Modular Decomposition* algorithm, follow these steps:
 
 1. Clone the repository.
-2. Compile the source code using your preferred C++ compiler.
-3. Provide the path to the Graph.txt-file as an argument in your configuration
-4. Insert your graph in the form of an adjacency list in the Graph.txt file
-5. Execute the compiled program, providing the necessary input.
+2. Provide the path to the Graph.txt-file as an argument in your configuration.
+3. Insert your graph in the form of an adjacency list in the Graph.txt file.
+4. Compile the source code using your preferred C++ compiler.
+5. Execute the compiled program.
 
 ### Note
 Ensure that the input graph is connected, simple and undirected. Otherwise, the algorithm might not produce any or faulty results.
