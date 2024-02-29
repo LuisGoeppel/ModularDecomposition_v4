@@ -51,9 +51,7 @@ This process is repeated until every tree has been included. Before the finaliza
 
 The result is the completed modular decomposition tree, ready to provide insights into the graph's modular structure.
 ### Usage
-To use this C++ implementation of the *Simple,
-
- Linear-time Modular Decomposition* algorithm, follow these steps:
+To use this C++ implementation of the *Simple, Linear-time Modular Decomposition* algorithm, follow these steps:
 
 1. Clone the repository.
 2. Compile the source code using your preferred C++ compiler.
